@@ -24,8 +24,9 @@ The result of this command will be a markdown file with the name "My first note"
 
 ---
 
+## Help
+
 ```shell
-Help
 ### Usage:
   gotes [flags]
   gotes [command]
