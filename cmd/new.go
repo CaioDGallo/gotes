@@ -139,7 +139,8 @@ func processRawNoteContent(noteSubject string, noteContent string) string {
 func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		panic("Error loading .env file")
+		log.Fatal("Error loading .env file")
+		os.Setenv("OPENAI_API_KEY", "")
 	}
 
 	rootCmd.AddCommand(newCmd)
