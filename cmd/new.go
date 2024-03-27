@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,7 +22,22 @@ var newCmd = &cobra.Command{
 	Short: "Create a new note",
 	Long:  `Create a new note at the default location specified in the configuration file.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		openAIApiKey := viper.GetString("openAIApiKey")
 		destinationPath := viper.GetString("rootFolder")
+
+		fileName := cmd.Flag("name").Value.String()
+		noteSubject := cmd.Flag("subject").Value.String()
+		noteContent := cmd.Flag("content").Value.String()
+		aiProcessedNoteString := cmd.Flag("ai").Value.String()
+
+		aiProcessedNote, err := strconv.ParseBool(aiProcessedNoteString)
+		if err != nil {
+			panic(err)
+		}
+
+		if openAIApiKey == "" && aiProcessedNote {
+			panic("The OpenAI API key is not set.")
+		}
 
 		if destinationPath == "" {
 			destinationPath = "./"
@@ -35,11 +49,6 @@ var newCmd = &cobra.Command{
 		}
 
 		var fullFilename strings.Builder
-
-		fileName := cmd.Flag("name").Value.String()
-		noteSubject := cmd.Flag("subject").Value.String()
-		noteContent := cmd.Flag("content").Value.String()
-		aiProcessedNoteString := cmd.Flag("ai").Value.String()
 
 		fullFilename.WriteString(destinationPath)
 		fullFilename.WriteString(fileName)
@@ -53,12 +62,8 @@ var newCmd = &cobra.Command{
 
 		processedNoteContent := processRawNoteContent(noteSubject, noteContent)
 
-		aiProcessedNote, err := strconv.ParseBool(aiProcessedNoteString)
-		if err != nil {
-			panic(err)
-		}
-
 		if aiProcessedNote {
+
 			processedNoteContent, err = requestNoteSummaryFromChatGPT(noteContent, noteSubject)
 			if err != nil {
 				log.Fatal(err)
@@ -137,12 +142,6 @@ func processRawNoteContent(noteSubject string, noteContent string) string {
 }
 
 func init() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-		os.Setenv("OPENAI_API_KEY", "")
-	}
-
 	rootCmd.AddCommand(newCmd)
 
 	newCmd.Flags().StringP("name", "n", "", "The name of the note file to be created.")
